@@ -1,7 +1,7 @@
-public abstract class Tile {
+public abstract class Tile implements Comparable<Tile> {
 	
 	private int x,y, playerId = 0;
-	
+	protected int distance;
 	
 	public int getX() {
 		return x;
@@ -27,6 +27,14 @@ public abstract class Tile {
 		this.playerId = playerId;
 	}
 	
+	public int getDistance() {
+		return distance;
+	}
+	
+	public void setDistance(int distance) {
+		this.distance = distance;
+	}
+	
 	public String getName() {
 		return null;
 	}
@@ -39,6 +47,10 @@ public abstract class Tile {
 		return;
 	}
 	
+	public int compareTo(Tile o) {
+		return Integer.compare(this.distance, o.distance);
+	}
+	
 	abstract void takeTurn();
 	
 	public void makeChoice() {
@@ -46,6 +58,10 @@ public abstract class Tile {
 	}
 	
 	public boolean isFighter() {
+		return false;
+	}
+	
+	public boolean isObstacle() {
 		return false;
 	}
 	

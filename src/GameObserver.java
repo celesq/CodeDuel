@@ -1,10 +1,10 @@
 import java.util.List;
 
-public class GameObsever implements FighterObserver {
+public class GameObserver implements FighterObserver {
 	
 	private List<Fighter> allFighters;
 	
-	public GameObsever(List<Fighter> allFighters) {
+	public GameObserver(List<Fighter> allFighters) {
 		this.allFighters = allFighters;
 		for (Fighter f : allFighters) {
 			f.addObserver(this);
@@ -27,9 +27,10 @@ public class GameObsever implements FighterObserver {
 		System.out.println("All dead from team" + id);
 		if (id == 1) {
 			System.out.println("Team 2 Won");
+			GameEngine.getInstance().endGame(2);
 		} else {
 			System.out.println("Team 1 Won");
+			GameEngine.getInstance().endGame(1);
 		}
-		GameEngine.endGame();
 	}
 }
