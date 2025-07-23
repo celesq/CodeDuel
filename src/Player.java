@@ -46,8 +46,8 @@ public class Player {
 	public void waitInput(Table gameTable) {
 		List<Tile> fightersOnTable = gameTable.getFightersOnTableFromPlayer(id);
 		for (Tile f : fightersOnTable) {
-			AIProfile.Strategy strategy = chooseStrategy(f);
-			AIProfile.Priority priority = choosePriority(f);
+			AIProfile.Strategy strategy = f.chooseStrategy();
+			AIProfile.Priority priority = f.choosePriority();
 			f.getChoice(strategy, priority);
 			f.takeTurn();
 		}
@@ -114,55 +114,5 @@ public class Player {
 				System.out.println("Please choose again, a number");
 			}
 		}
-	}
-	
-	public static AIProfile.Strategy chooseStrategy(Tile fighter) {
-		
-		int strategyChoice;
-		AIProfile.Strategy selectedStrategy;
-		Scanner scanner = new Scanner(System.in);
-		
-		System.out.println("Choose Strategy for Fighter " + fighter.getName());
-		System.out.println("1. " + AIProfile.Strategy.AGGRESSIVE);
-		System.out.println("2. " + AIProfile.Strategy.DEFENSIVE);
-		System.out.println("3. " + AIProfile.Strategy.PASSIVE);
-		
-		strategyChoice = scanner.nextInt();
-		switch (strategyChoice) {
-			case 1 -> selectedStrategy = AIProfile.Strategy.AGGRESSIVE;
-			case 2 -> selectedStrategy = AIProfile.Strategy.DEFENSIVE;
-			case 3 -> selectedStrategy = AIProfile.Strategy.PASSIVE;
-			default -> {
-				System.out.println("Invalid choice. Defaulting to PASSIVE.");
-				selectedStrategy = AIProfile.Strategy.PASSIVE;
-			}
-		}
-		
-		return selectedStrategy;
-	}
-	
-	public static AIProfile.Priority choosePriority(Tile fighter) {
-		
-		int priorityChoice;
-		AIProfile.Priority selectedPriority;
-		Scanner scanner = new Scanner(System.in);
-		
-		System.out.println("Choose Priority for Fighter " + fighter.getName());
-		System.out.println("1. " + AIProfile.Priority.STRONGEST);
-		System.out.println("2. " + AIProfile.Priority.CLOSEST);
-		System.out.println("3. " + AIProfile.Priority.WEAKEST);
-		
-		priorityChoice = scanner.nextInt();
-		switch (priorityChoice) {
-			case 1 -> selectedPriority = AIProfile.Priority.STRONGEST;
-			case 2 -> selectedPriority = AIProfile.Priority.CLOSEST;
-			case 3 -> selectedPriority =  AIProfile.Priority.WEAKEST;
-			default -> {
-				System.out.println("Invalid choice. Defaulting to CLOSEST.");
-				selectedPriority =  AIProfile.Priority.CLOSEST;
-			}
-		}
-		
-		return selectedPriority;
 	}
 }

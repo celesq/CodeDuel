@@ -6,6 +6,7 @@ import java.util.Scanner;
 public class GameEngine {
 	
 	private static final int MAX_ROUNDS = 100;
+	
 	private Table gameTable= new Table();
 	private static Player player1, player2;
 	private FighterObserver observer;
@@ -40,6 +41,7 @@ public class GameEngine {
 		
 		for (int i = 0; i < MAX_ROUNDS; i++) {
 			System.out.println("Round " + (i + 1));
+			Table.updateEffects();
 			Table.printCurrentGameState();
 			player1.waitInput(gameTable);
 			player2.waitInput(gameTable);

@@ -82,13 +82,38 @@ public class Table {
 		return fighters;
 	}
 	
+	public static void updateEffects() {
+		for (int i = 0; i < ROWS; i++) {
+			for (int j = 0; j < COLUMNS; j++) {
+				if (map[i][j].isFighter()) {
+					if (map[i][j].getEffectDuration() > 0) {
+						map[i][j].setEffectDuration(map[i][j].getEffectDuration() - 1);
+						map[i][j].effectAction();
+					} else if (map[i][j].getEffect() != AIProfile.Magic.NO_EFFECT) {
+							map[i][j].setEffect(AIProfile.Magic.NO_EFFECT);
+						}
+				}
+			}
+		}
+	}
+	
+	private static void setDistances() {
+		for (int i = 0; i < ROWS; i++) {
+			for (int j = 0; j < COLUMNS; j++) {
+				map[i][j].setDistance(Integer.MAX_VALUE);
+			}
+		}
+	}
+	
 	public static Tile shortestPath(Tile start, Tile goal, Tile[][] parents) {
+		setDistances();
+		start.setDistance(0);
 		PriorityQueue<Tile> queue = new PriorityQueue<>();
 		queue.add(start);
 		
 		while (!queue.isEmpty()) {
 			Tile current = queue.poll();
-			if (current == goal) {
+			if (current.getX() == goal.getX() && current.getY() == goal.getY()) {
 				return current;
 			} else {
 				BFSMatrix(parents, queue, current);
@@ -97,66 +122,53 @@ public class Table {
 		return null;
 	}
 	
-	public static Tile BFS(Tile start, int desiredId, Tile[][] parents, boolean closest) {
+	public static Tile BFS(Tile start, int desiredId, Tile[][] parents) {
 		PriorityQueue<Tile> queue = new PriorityQueue<>();
+		setDistances();
 		start.setDistance(0);
 		queue.add(start);
 		
-		if (closest) {
-			while (!queue.isEmpty()) {
-				Tile current = queue.poll();
-				if (current.getPlayerId() != 0) {
-					return current;
-				} else {
-					BFSMatrix(parents, queue, current);
-				}
-			}
-		} else {
-			while (!queue.isEmpty()) {
-				Tile current = queue.poll();
-				if (current.getPlayerId() == desiredId) {
-					return current;
-				} else {
-					BFSMatrix(parents, queue, current);
-				}
+		while (!queue.isEmpty()) {
+			Tile current = queue.poll();
+			if (current.getPlayerId() == desiredId) {
+				return current;
+			} else {
+				BFSMatrix(parents, queue, current);
 			}
 		}
+		
 		return null;
 		
 	}
 	
 	private static void BFSMatrix(Tile[][] parents, PriorityQueue<Tile> queue, Tile current) {
 		int x = current.getX(), y = current.getY();
-		if (y + 1 < COLUMNS && map[x][y + 1] != null && !map[x][y + 1].isObstacle()) {
+		
+		if (y + 1 < COLUMNS && !map[x][y + 1].isObstacle() && parents[x][y + 1] == null) {
 			map[x][y + 1].setDistance(current.getDistance() + 1);
 			queue.add(map[x][y + 1]);
-			parents[x][y] = map[x][y + 1];
+			parents[x][y + 1] = map[x][y];
 		}
-		if (y - 1 >= 0 && map[x][y - 1] != null && !map[x][y - 1].isObstacle()) {
+		if (y - 1 >= 0 && !map[x][y - 1].isObstacle() && parents[x][y - 1] == null) {
 			map[x][y - 1].setDistance(current.getDistance() + 1);
 			queue.add(map[x][y - 1]);
-			parents[x][y] = map[x][y - 1];
+			parents[x][y - 1] = map[x][y];
 		}
-		if (x + 1 < ROWS && map[x + 1][y] != null && !map[x + 1][y].isObstacle()) {
+		if (x + 1 < ROWS && !map[x + 1][y].isObstacle() && parents[x + 1][y] == null) {
 			map[x + 1][y].setDistance(current.getDistance() + 1);
 			queue.add(map[x + 1][y]);
-			parents[x][y] = map[x + 1][y];
+			parents[x + 1][y] = map[x][y];
 		}
-		if (x - 1 >= 0 && map[x - 1][y] != null && !map[x - 1][y].isObstacle()) {
+		if (x - 1 >= 0 && !map[x - 1][y].isObstacle() && parents[x - 1][y] == null) {
 			map[x - 1][y].setDistance(current.getDistance() + 1);
 			queue.add(map[x - 1][y]);
-			parents[x][y] = map[x - 1][y];
+			parents[x - 1][y] = map[x][y];
 		}
 	}
 	
-	public static Tile getClosest(int x, int y, int playerId, int desiredId) {
+	public static Tile getClosest(int x, int y, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		for (int i = 0; i < ROWS; i++) {
-			for (int j = 0; j < COLUMNS; j++) {
-				parents[i][j] = new EmptyTile(i, j);
-			}
-		}
-		Tile closest = BFS(map[x][y], desiredId, parents, false);
+		Tile closest = BFS(map[x][y], desiredId, parents);
 		if (closest != null) {
 			return closest;
 		} else {
@@ -165,7 +177,7 @@ public class Table {
 		}
 	}
 	
-	public static Tile getStrongest(int x, int y) {
+	public static Tile getStrongest(int x, int y, int desiredId) {
 		Tile strongest = null;
 		int maxStrongest = -1;
 		
@@ -173,7 +185,7 @@ public class Table {
 			for (int j = 0; j < COLUMNS; j++) {
 				if (map[i][j] != null) {
 					if (map[i][j].isFighter()) {
-						if (map[i][j].getHealth() > maxStrongest && (i != x || j != y)) {
+						if (map[i][j].getHealth() > maxStrongest && (i != x || j != y) && map[i][j].getPlayerId() == desiredId) {
 							maxStrongest = map[i][j].getHealth();
 							strongest = map[i][j];
 						}
@@ -185,7 +197,7 @@ public class Table {
 		return strongest;
 	}
 	
-	public static Tile getWeakest(int x, int y) {
+	public static Tile getWeakest(int x, int y, int desiredId) {
 		Tile weakest = null;
 		int maxWeakest = Integer.MAX_VALUE;
 		
@@ -193,7 +205,7 @@ public class Table {
 			for (int j = 0; j < COLUMNS; j++) {
 				if (map[i][j] != null) {
 					if (map[i][j].isFighter()) {
-						if (map[i][j].getHealth() < maxWeakest && (i != x || j != y)) {
+						if (map[i][j].getHealth() < maxWeakest && (i != x || j != y) && map[i][j].getPlayerId() == desiredId) {
 							maxWeakest = map[i][j].getHealth();
 							weakest = map[i][j];
 						}
@@ -204,15 +216,9 @@ public class Table {
 		return weakest;
 	}
 	
-	public static void moveToClosest(Tile fighter) {
+	public static void moveToClosest(Tile fighter, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		for (int i = 0; i < ROWS; i++) {
-			for (int j = 0; j < COLUMNS; j++) {
-				parents[i][j] = new EmptyTile(i, j);
-			}
-		}
-		
-		Tile closest = BFS(fighter, -1, parents, true);
+		Tile closest = BFS(fighter, desiredId, parents);
 		if (closest == null) {
 			System.out.println("No closest fighter found\n");
 		} else {
@@ -220,34 +226,27 @@ public class Table {
 		}
 	}
 	
-	public static void moveTowards(Tile fighter, int x, int y) {
+	public static void moveTowards(Tile myFighter, int x, int y) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		for (int i = 0; i < ROWS; i++) {
-			for (int j = 0; j < COLUMNS; j++) {
-				parents[i][j] = new EmptyTile(i, j);
-			}
-		}
-		Tile destination = shortestPath(fighter, map[x][y], parents);
+		Tile destination = shortestPath(myFighter, map[x][y], parents);
 		if (destination != null) {
-			backTrackPathAndMove(fighter, parents, destination);
-			
-			
+			backTrackPathAndMove(myFighter, parents, destination);
 		} else {
 			System.out.println("No destination fighter found\n");
 		}
 	}
 	
-	private static void backTrackPathAndMove(Tile fighter, Tile[][] parents, Tile destination) {
-		Tile current = parents[destination.getX()][destination.getY()], last = destination;
-		while (current != fighter) {
+	private static void backTrackPathAndMove(Tile myFighter, Tile[][] parents, Tile destination) {
+		Tile current = destination , last = destination;
+		while (current != myFighter && current != null) {
 			last = current;
 			current = parents[current.getX()][current.getY()];
 		}
 		
-		removeTileOnTable(fighter.getX(), fighter.getY());
-		fighter.setX(last.getX());
-		fighter.setY(last.getY());
-		putTileOnTable(fighter.getX(), fighter.getY(), fighter);
+		removeTileOnTable(myFighter.getX(), myFighter.getY());
+		myFighter.setX(last.getX());
+		myFighter.setY(last.getY());
+		putTileOnTable(myFighter.getX(), myFighter.getY(), myFighter);
 	}
 	
 	public static boolean checkIfTeamDead(int id) {

@@ -1,7 +1,12 @@
 public abstract class Tile implements Comparable<Tile> {
 	
-	private int x,y, playerId = 0;
 	protected int distance;
+	
+	private int x, y, playerId = 0;
+	
+	private AIProfile.Magic effect = AIProfile.Magic.NO_EFFECT;
+	
+	private int effectDuration = 0;
 	
 	public int getX() {
 		return x;
@@ -44,7 +49,33 @@ public abstract class Tile implements Comparable<Tile> {
 	}
 	
 	public void getChoice(AIProfile.Strategy strategy, AIProfile.Priority priority) {
+	}
+	
+	public void takeDamage(Tile fighter, int damageTaken) {
+	}
+	
+	public void effectAction() {
 		return;
+	}
+	
+	public void effectAction(int damageTaken, int healingTaken) {
+		return;
+	}
+	
+	public AIProfile.Magic getEffect() {
+		return effect;
+	}
+	
+	public void setEffect(AIProfile.Magic effect) {
+		this.effect = effect;
+	}
+	
+	public int getEffectDuration() {
+		return effectDuration;
+	}
+	
+	public void setEffectDuration(int effectDuration) {
+		this.effectDuration = effectDuration;
 	}
 	
 	public int compareTo(Tile o) {
@@ -54,7 +85,6 @@ public abstract class Tile implements Comparable<Tile> {
 	abstract void takeTurn();
 	
 	public void makeChoice() {
-		return;
 	}
 	
 	public boolean isFighter() {
@@ -65,6 +95,10 @@ public abstract class Tile implements Comparable<Tile> {
 		return false;
 	}
 	
+	public boolean isMage() {
+		return false;
+	}
+	
 	public int getHealth() {
 		System.out.println("Something went wrong");
 		return -1;
@@ -72,6 +106,15 @@ public abstract class Tile implements Comparable<Tile> {
 	
 	public void setHealth(int health) {
 		System.out.println("Something went wrong");
-		return;
+	}
+	
+	public AIProfile.Strategy chooseStrategy() {
+		System.out.println("Something went wrong");
+		return null;
+	}
+	
+	public AIProfile.Priority choosePriority() {
+		System.out.println("Something went wrong");
+		return null;
 	}
 }

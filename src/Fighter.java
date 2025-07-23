@@ -2,17 +2,14 @@ import javafx.scene.control.Tab;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public abstract class Fighter extends Tile{
 	
 	private int health, attackDamage, heal;
 	private String name;
-	private AIProfile behaviour;
+	protected AIProfile behaviour;
 	private List<FighterObserver> observers = new ArrayList<>();
-	
-	public void getChoice(AIProfile.Strategy strategy, AIProfile.Priority priority) {
-		behaviour = new AIProfile(strategy, priority);
-	}
 	
 	@Override
 	public int getHealth() {
@@ -63,15 +60,103 @@ public abstract class Fighter extends Tile{
 		observers.remove(observer);
 	}
 	
+	public void getChoice(AIProfile.Strategy strategy, AIProfile.Priority priority) {
+		behaviour = new AIProfile(strategy, priority);
+	}
+	
 	@Override
 	public boolean isFighter() {
 		return true;
 	}
 	
+	@Override
+	public AIProfile.Strategy chooseStrategy() {
+		int strategyChoice;
+		AIProfile.Strategy selectedStrategy;
+		Scanner scanner = new Scanner(System.in);
+		
+		System.out.println("Choose Strategy for Fighter " + name);
+		System.out.println("1. " + AIProfile.Strategy.AGGRESSIVE);
+		System.out.println("2. " + AIProfile.Strategy.DEFENSIVE);
+		System.out.println("3. " + AIProfile.Strategy.PASSIVE);
+		
+		strategyChoice = scanner.nextInt();
+		switch (strategyChoice) {
+			case 1 -> selectedStrategy = AIProfile.Strategy.AGGRESSIVE;
+			case 2 -> selectedStrategy = AIProfile.Strategy.DEFENSIVE;
+			case 3 -> selectedStrategy = AIProfile.Strategy.PASSIVE;
+			default -> {
+				System.out.println("Invalid choice. Defaulting to PASSIVE.");
+				selectedStrategy = AIProfile.Strategy.PASSIVE;
+			}
+		}
+		
+		return selectedStrategy;
+	}
+	
+	@Override
+	public AIProfile.Priority choosePriority() {
+		int priorityChoice;
+		AIProfile.Priority selectedPriority;
+		Scanner scanner = new Scanner(System.in);
+		
+		System.out.println("Choose Priority for Fighter " + name);
+		System.out.println("1. " + AIProfile.Priority.STRONGEST);
+		System.out.println("2. " + AIProfile.Priority.CLOSEST);
+		System.out.println("3. " + AIProfile.Priority.WEAKEST);
+		
+		priorityChoice = scanner.nextInt();
+		switch (priorityChoice) {
+			case 1 -> selectedPriority = AIProfile.Priority.STRONGEST;
+			case 2 -> selectedPriority = AIProfile.Priority.CLOSEST;
+			case 3 -> selectedPriority =  AIProfile.Priority.WEAKEST;
+			default -> {
+				System.out.println("Invalid choice. Defaulting to CLOSEST.");
+				selectedPriority =  AIProfile.Priority.CLOSEST;
+			}
+		}
+		
+		return selectedPriority;
+	}
+	
+	void takeTurn(){
+		System.out.println("I am taking my turn");
+		makeChoice();
+	}
+	
+	@Override
+	public void effectAction() {
+		switch (getEffect()) {
+			case POISON -> takeDamage(this, AIProfile.POISON_DAMAGE);
+			default -> {
+				return;
+			}
+		}
+	}
+	
+	@Override
+	public void effectAction(int damageTaken, int healingTaken) {
+		switch (getEffect()) {
+			case CURSE -> takeDamage(this, damageTaken * 2);
+			case SUPER_HEAL -> takeHeal(this, healingTaken * 2);
+			default -> {
+				if (damageTaken > 0) {
+					takeDamage(this, damageTaken);
+				} else if (healingTaken > 0) {
+					takeHeal(this, healingTaken);
+				}
+			}
+		}
+	}
+	
 	public void attack(Tile fighter) {
+		fighter.effectAction(this.getAttackDamage(), 0);
+	}
+	
+	public void takeDamage(Tile fighter, int damageTaken) {
 		int oldHp = fighter.getHealth();
 		
-		fighter.setHealth(fighter.getHealth() - this.getAttackDamage());
+		fighter.setHealth(fighter.getHealth() - damageTaken);
 		
 		if (fighter.getHealth() <= 0) {
 			fighter.setHealth(0);
@@ -90,85 +175,111 @@ public abstract class Fighter extends Tile{
 	}
 	
 	public void heal(Tile fighter) {
-		fighter.setHealth(fighter.getHealth() + this.getHeal());
+		fighter.effectAction(0, this.getHeal());
+	}
+	
+	public void takeHeal(Tile fighter, int healingTaken) {
+		fighter.setHealth(fighter.getHealth() + healingTaken);
 	}
 	
 	public void getClosestAndAttack() {
 		System.out.println("Got closest and ready to attack");
 		Tile closestFighter;
 		if (getPlayerId() == 1) {
-			closestFighter = Table.getClosest(getX(), getY(), 1 , 2);
+			closestFighter = Table.getClosest(getX(), getY() , 2);
 		} else {
-			closestFighter = Table.getClosest(getX(), getY(), 2 , 1);
+			closestFighter = Table.getClosest(getX(), getY(), 1);
 		}
 		if (closestFighter.getX() == getX() && closestFighter.getY() == getY()) {
 			System.out.println("No fighter found!");
 		} else {
-			if ((getX() == closestFighter.getX() && Math.abs(getY() - closestFighter.getY()) < 2)
-			|| (getY() == closestFighter.getY() && Math.abs(getX() - closestFighter.getX()) < 2)) {
-				attack(closestFighter);
-				System.out.println("Fighter attacked!");
-			} else {
-				System.out.println("We got to move");
-				Table.moveTowards(this, closestFighter.getX(), closestFighter.getY());
-			}
+			moveOrTakeActionAndCheck(closestFighter, false);
 		}
 	}
 	
-	void takeTurn(){
-		System.out.println("I am taking my turn");
-		makeChoice();
-	}
-	
 	public void getClosestAndMove() {
-		Table.moveToClosest(this);
+		if (getPlayerId() == 1) {
+			Table.moveToClosest(this, 2);
+		} else {
+			Table.moveToClosest(this, 1);
+		}
 	}
 	
 	public void getClosestAndHeal() {
 		Tile closestFighter;
 		if (getPlayerId() == 1) {
-			closestFighter = Table.getClosest(getX(), getY(), 2 , 1);
+			closestFighter = Table.getClosest(getX(), getY(), 1);
 		} else {
-			closestFighter = Table.getClosest(getX(), getY(), 1 , 2);
+			closestFighter = Table.getClosest(getX(), getY(), 2);
 		}
 		if (closestFighter.getX() == getX() && closestFighter.getY() == getY()) {
 			System.out.println("No fighter found!");
 		} else {
-			moveOrTakeAction(closestFighter, true);
+			moveOrTakeActionAndCheck(closestFighter, true);
 		}
 	}
 	
 	public void getStrongestAndAttack() {
-		Tile strongestFighter = Table.getStrongest(getX(), getY());
+		Tile strongestFighter;
+		if (getPlayerId() == 1) {
+			strongestFighter = Table.getStrongest(getX(), getY(), 2);
+		} else {
+			strongestFighter = Table.getStrongest(getX(), getY(), 1);
+		}
 		moveOrTakeActionAndCheck(strongestFighter, false);
 	}
 	
 	public void getStrongestAndMove() {
-		Tile strongestFighter = Table.getStrongest(getX(), getY());
+		Tile strongestFighter;
+		if (getPlayerId() == 1) {
+			strongestFighter = Table.getStrongest(getX(), getY(), 2);
+		} else {
+			strongestFighter = Table.getStrongest(getX(), getY(), 1);
+		}
 		Table.moveTowards(this, strongestFighter.getX(), strongestFighter.getY());
 	}
 	
 	public void getStrongestAndHeal() {
-		Tile strongestFighter = Table.getStrongest(getX(), getY());
+		Tile strongestFighter;
+		if (getPlayerId() == 1) {
+			strongestFighter = Table.getStrongest(getX(), getY(), 1);
+		} else {
+			strongestFighter = Table.getStrongest(getX(), getY(), 2);
+		}
 		moveOrTakeAction(strongestFighter, true);
 	}
 	
 	public void getWeakestAndAttack() {
-		Tile weakestFighter = Table.getWeakest(getX(), getY());
+		Tile weakestFighter;
+		if (getPlayerId() == 1) {
+			weakestFighter = Table.getWeakest(getX(), getY(), 2);
+		} else {
+			weakestFighter = Table.getWeakest(getX(), getY(), 1);
+		}
 		moveOrTakeActionAndCheck(weakestFighter, false);
 	}
 	
 	public void getWeakestAndMove() {
-		Tile weakest = Table.getWeakest(getX(), getY());
-		Table.moveTowards(this, weakest.getX(), weakest.getY());
+		Tile weakestFighter;
+		if (getPlayerId() == 1) {
+			weakestFighter = Table.getWeakest(getX(), getY(), 2);
+		} else {
+			weakestFighter = Table.getWeakest(getX(), getY(), 1);
+		}
+		Table.moveTowards(this, weakestFighter.getX(), weakestFighter.getY());
 	}
 	
 	public void getWeakestAndHeal() {
-		Tile weakest = Table.getWeakest(getX(), getY());
-		moveOrTakeAction(weakest, true);
+		Tile weakestFighter;
+		if (getPlayerId() == 1) {
+			weakestFighter = Table.getWeakest(getX(), getY(), 1);
+		} else {
+			weakestFighter = Table.getWeakest(getX(), getY(), 2);
+		}
+		moveOrTakeAction(weakestFighter, true);
 	}
 	
-	private void moveOrTakeAction(Tile fighter, boolean heal) {
+	protected void moveOrTakeAction(Tile fighter, boolean heal) {
 		if ((getX() == fighter.getX() && Math.abs(getY() - fighter.getY()) < 2)
 				|| (getY() == fighter.getY() && Math.abs(getX() - fighter.getX()) < 2)) {
 			if(heal) {
@@ -177,17 +288,18 @@ public abstract class Fighter extends Tile{
 				attack(fighter);
 			}
 		} else {
+			System.out.println("Moving towards fighter");
 			Table.moveTowards(this, fighter.getX(), fighter.getY());
 		}
 	}
 	
-	private void moveOrTakeActionAndCheck(Tile fighter, boolean heal) {
+	protected void moveOrTakeActionAndCheck(Tile fighter, boolean heal) {
 		if (fighter != this) {
 			moveOrTakeAction(fighter, heal);
 		} else {
 			System.out.println("Choose again\n");
-			Player.chooseStrategy(this);
-			Player.choosePriority(this);
+			chooseStrategy();
+			choosePriority();
 			makeChoice();
 		}
 	}

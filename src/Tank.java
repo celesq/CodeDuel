@@ -4,7 +4,7 @@ public class Tank extends Fighter {
 		setName("Tank");
 		setPlayerId(id);
 		setAttackDamage(10);
-		setHealth(200);
+		setHealth(225);
 		setHeal(10);
 		setBehaviour(new AIProfile(AIProfile.Strategy.DEFENSIVE, AIProfile.Priority.WEAKEST));
 	}
