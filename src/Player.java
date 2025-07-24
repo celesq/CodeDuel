@@ -60,7 +60,8 @@ public class Player {
 		for (int i = 0; i < 5; i++) {
 			try {
 				Scanner scanner = new Scanner(System.in);
-				System.out.println("Please choose a fighter");
+				System.out.println("Please choose a fighter, 1 - Berserker, 2 - Archer , 3 - Mage, "
+						+ "4 - Healer, 5 - Tank");
 				int choice = scanner.nextInt();
 				while (choice < 1 || choice > 5) {
 					System.out.println("Please choose again, a number between 1 and 5");
@@ -78,7 +79,7 @@ public class Player {
 	public void placeCardsOnTable(Table gameTable){
 		Scanner scanner = new Scanner(System.in);
 		List<Integer> spacesLeft;
-		int choiceRow= 1000, choiceCol = 1000;
+		int choiceRow, choiceCol;
 		Iterator<Fighter> iterator = team.iterator();
 		while (iterator.hasNext()) {
 			Fighter fighter = iterator.next();

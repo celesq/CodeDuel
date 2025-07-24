@@ -3,7 +3,7 @@ public class AIProfile {
 	public final static int POISON_DAMAGE = 3;
 	
 	public enum Strategy{AGGRESSIVE, DEFENSIVE, PASSIVE, MAGIC};
-	public enum Priority{CLOSEST, WEAKEST, STRONGEST};
+	public enum Priority{CLOSEST, WEAKEST, STRONGEST, CLOSEST_WITH_EFFECT};
 	public enum Magic{POISON, CURSE, SUPER_HEAL, NO_EFFECT}
 	
 	private Strategy strategy;
@@ -49,7 +49,7 @@ public class AIProfile {
 		int distance = Math.abs(fighter.getX() - mage.getX()) + Math.abs(fighter.getY() - mage.getY());
 		if (distance < 3) {
 			magicGetChoice(mage, fighter);
-			System.out.println("Fighter poisoned!");
+			System.out.println("Effect applied!");
 		} else {
 			System.out.println("We got to move");
 			Table.moveTowards(mage, fighter.getX(), fighter.getY());

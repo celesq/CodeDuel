@@ -1,8 +1,11 @@
+import javax.crypto.DecapsulateException;
 import java.awt.PageAttributes;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Table {
 	
@@ -58,6 +61,20 @@ public class Table {
 		}
 	}
 	
+	private static List<Tile> makeForbiddenList(Tile myFighter, Tile destination) {
+		List<Tile> forbidden = new ArrayList<>();
+		for (int i = 0; i < ROWS; i++) {
+			for (int j = 0; j < COLUMNS; j++) {
+				if (map[i][j] != myFighter && map[i][j] != destination) {
+					if (map[i][j].isFighter() || map[i][j].isObstacle()) {
+						forbidden.add(map[i][j]);
+					}
+				}
+			}
+		}
+		return forbidden;
+	}
+	
 	public List<Integer> spacesLeftOnRowX (int x) {
 		List<Integer> spaces = new ArrayList<>();
 		for (int j = 0; j < COLUMNS; j++) {
@@ -105,7 +122,7 @@ public class Table {
 		}
 	}
 	
-	public static Tile shortestPath(Tile start, Tile goal, Tile[][] parents) {
+	public static Tile shortestPath(Tile start, Tile goal, Tile[][] parents, List<Tile> forbidden) {
 		setDistances();
 		start.setDistance(0);
 		PriorityQueue<Tile> queue = new PriorityQueue<>();
@@ -116,24 +133,33 @@ public class Table {
 			if (current.getX() == goal.getX() && current.getY() == goal.getY()) {
 				return current;
 			} else {
-				BFSMatrix(parents, queue, current);
+				BFSMatrix(parents, queue, current, forbidden);
 			}
 		}
 		return null;
 	}
 	
-	public static Tile BFS(Tile start, int desiredId, Tile[][] parents) {
+	public static Tile BFS(Tile start, int desiredId, Tile[][] parents, boolean withEffect) {
 		PriorityQueue<Tile> queue = new PriorityQueue<>();
 		setDistances();
 		start.setDistance(0);
 		queue.add(start);
+		List<Tile> forbidden = new ArrayList<>();
 		
 		while (!queue.isEmpty()) {
 			Tile current = queue.poll();
 			if (current.getPlayerId() == desiredId) {
-				return current;
+				if (!withEffect) {
+					return current;
+				} else {
+					if (current.getEffectDuration() > 0) {
+						return current;
+					} else {
+						BFSMatrix(parents, queue, current, forbidden);
+					}
+				}
 			} else {
-				BFSMatrix(parents, queue, current);
+				BFSMatrix(parents, queue, current, forbidden);
 			}
 		}
 		
@@ -141,25 +167,25 @@ public class Table {
 		
 	}
 	
-	private static void BFSMatrix(Tile[][] parents, PriorityQueue<Tile> queue, Tile current) {
+	private static void BFSMatrix(Tile[][] parents, PriorityQueue<Tile> queue, Tile current, List<Tile> forbidden) {
 		int x = current.getX(), y = current.getY();
 		
-		if (y + 1 < COLUMNS && !map[x][y + 1].isObstacle() && parents[x][y + 1] == null) {
+		if (y + 1 < COLUMNS && !map[x][y + 1].isObstacle() && parents[x][y + 1] == null && !forbidden.contains(map[x][y + 1])) {
 			map[x][y + 1].setDistance(current.getDistance() + 1);
 			queue.add(map[x][y + 1]);
 			parents[x][y + 1] = map[x][y];
 		}
-		if (y - 1 >= 0 && !map[x][y - 1].isObstacle() && parents[x][y - 1] == null) {
+		if (y - 1 >= 0 && !map[x][y - 1].isObstacle() && parents[x][y - 1] == null && !forbidden.contains(map[x][y - 1])) {
 			map[x][y - 1].setDistance(current.getDistance() + 1);
 			queue.add(map[x][y - 1]);
 			parents[x][y - 1] = map[x][y];
 		}
-		if (x + 1 < ROWS && !map[x + 1][y].isObstacle() && parents[x + 1][y] == null) {
+		if (x + 1 < ROWS && !map[x + 1][y].isObstacle() && parents[x + 1][y] == null && !forbidden.contains(map[x + 1][y])) {
 			map[x + 1][y].setDistance(current.getDistance() + 1);
 			queue.add(map[x + 1][y]);
 			parents[x + 1][y] = map[x][y];
 		}
-		if (x - 1 >= 0 && !map[x - 1][y].isObstacle() && parents[x - 1][y] == null) {
+		if (x - 1 >= 0 && !map[x - 1][y].isObstacle() && parents[x - 1][y] == null && !forbidden.contains(map[x - 1][y])) {
 			map[x - 1][y].setDistance(current.getDistance() + 1);
 			queue.add(map[x - 1][y]);
 			parents[x - 1][y] = map[x][y];
@@ -168,7 +194,7 @@ public class Table {
 	
 	public static Tile getClosest(int x, int y, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		Tile closest = BFS(map[x][y], desiredId, parents);
+		Tile closest = BFS(map[x][y], desiredId, parents, false);
 		if (closest != null) {
 			return closest;
 		} else {
@@ -215,10 +241,9 @@ public class Table {
 		}
 		return weakest;
 	}
-	
 	public static void moveToClosest(Tile fighter, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		Tile closest = BFS(fighter, desiredId, parents);
+		Tile closest = BFS(fighter, desiredId, parents, false);
 		if (closest == null) {
 			System.out.println("No closest fighter found\n");
 		} else {
@@ -226,9 +251,27 @@ public class Table {
 		}
 	}
 	
+	public static boolean moveToClosestWithEffect(Tile fighter, int desiredId) {
+		Tile[][] parents = new Tile[ROWS][COLUMNS];
+		Tile closest = BFS(fighter, desiredId, parents, true);
+		if (closest == null) {
+			System.out.println("No closest fighter found\n");
+			return false;
+		} else {
+			backTrackPathAndMove(fighter, parents, closest);
+			return true;
+		}
+	}
+	
+	public static Tile getClosestWithEffect(int x, int y, int desiredId) {
+		Tile[][] parents = new Tile[ROWS][COLUMNS];
+		return BFS(map[x][y], desiredId, parents, true);
+	}
+	
 	public static void moveTowards(Tile myFighter, int x, int y) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		Tile destination = shortestPath(myFighter, map[x][y], parents);
+		List<Tile> forbidden = makeForbiddenList(myFighter, map[x][y]);
+		Tile destination = shortestPath(myFighter, map[x][y], parents, forbidden);
 		if (destination != null) {
 			backTrackPathAndMove(myFighter, parents, destination);
 		} else {
@@ -244,9 +287,7 @@ public class Table {
 		}
 		
 		removeTileOnTable(myFighter.getX(), myFighter.getY());
-		myFighter.setX(last.getX());
-		myFighter.setY(last.getY());
-		putTileOnTable(myFighter.getX(), myFighter.getY(), myFighter);
+		putTileOnTable(last.getX(), last.getY(), myFighter);
 	}
 	
 	public static boolean checkIfTeamDead(int id) {

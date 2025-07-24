@@ -104,12 +104,14 @@ public abstract class Fighter extends Tile{
 		System.out.println("1. " + AIProfile.Priority.STRONGEST);
 		System.out.println("2. " + AIProfile.Priority.CLOSEST);
 		System.out.println("3. " + AIProfile.Priority.WEAKEST);
+		System.out.println("4. " + AIProfile.Priority.CLOSEST_WITH_EFFECT);
 		
 		priorityChoice = scanner.nextInt();
 		switch (priorityChoice) {
 			case 1 -> selectedPriority = AIProfile.Priority.STRONGEST;
 			case 2 -> selectedPriority = AIProfile.Priority.CLOSEST;
 			case 3 -> selectedPriority =  AIProfile.Priority.WEAKEST;
+			case 4 -> selectedPriority = AIProfile.Priority.CLOSEST_WITH_EFFECT;
 			default -> {
 				System.out.println("Invalid choice. Defaulting to CLOSEST.");
 				selectedPriority =  AIProfile.Priority.CLOSEST;
@@ -213,6 +215,59 @@ public abstract class Fighter extends Tile{
 			closestFighter = Table.getClosest(getX(), getY(), 2);
 		}
 		if (closestFighter.getX() == getX() && closestFighter.getY() == getY()) {
+			System.out.println("No fighter found!");
+		} else {
+			moveOrTakeActionAndCheck(closestFighter, true);
+		}
+	}
+	
+	public void getClosestWithEffectAndAttack() {
+		Tile closestFighter;
+		if (getPlayerId() == 1) {
+			closestFighter = Table.getClosestWithEffect(getX(), getY(), 2);
+		} else {
+			closestFighter = Table.getClosestWithEffect(getX(), getY(), 1);
+		}
+		if (closestFighter == null) {
+			System.out.println("No closest fighter with effect found, please choose again");
+			chooseStrategy();
+			choosePriority();
+			makeChoice();
+		} else if (closestFighter.getX() == getX() && closestFighter.getY() == getY()) {
+			System.out.println("No fighter found!");
+		} else {
+			moveOrTakeActionAndCheck(closestFighter, false);
+		}
+	}
+	
+	public void getClosestWithEffectAndMove() {
+		boolean found;
+		if (getPlayerId() == 1) {
+			found = Table.moveToClosestWithEffect(this, 2);
+		} else {
+			found = Table.moveToClosestWithEffect(this, 1);
+		}
+		if (!found) {
+			System.out.println("No closest fighter with effect found, please choose again");
+			chooseStrategy();
+			choosePriority();
+			makeChoice();
+		}
+	}
+	
+	public void getClosestWithEffectAndHeal() {
+		Tile closestFighter;
+		if (getPlayerId() == 1) {
+			closestFighter = Table.getClosestWithEffect(getX(), getY(), 1);
+		} else {
+			closestFighter = Table.getClosestWithEffect(getX(), getY(), 2);
+		}
+		if (closestFighter == null) {
+			System.out.println("No closest fighter with effect found, please choose again");
+			chooseStrategy();
+			choosePriority();
+			makeChoice();
+		} else if (closestFighter.getX() == getX() && closestFighter.getY() == getY()) {
 			System.out.println("No fighter found!");
 		} else {
 			moveOrTakeActionAndCheck(closestFighter, true);
@@ -334,6 +389,14 @@ public abstract class Fighter extends Tile{
 				getWeakestAndMove();
 			} else if (behaviour.getStrategy() == AIProfile.Strategy.DEFENSIVE) {
 				getWeakestAndHeal();
+			}
+		} else if (behaviour.getPriority() == AIProfile.Priority.CLOSEST_WITH_EFFECT) {
+			if (behaviour.getStrategy() == AIProfile.Strategy.AGGRESSIVE) {
+				getClosestWithEffectAndAttack();
+			} else if (behaviour.getStrategy() == AIProfile.Strategy.PASSIVE) {
+				getClosestWithEffectAndMove();
+			} else if (behaviour.getStrategy() == AIProfile.Strategy.DEFENSIVE) {
+				getClosestWithEffectAndHeal();
 			}
 		}
 	}
