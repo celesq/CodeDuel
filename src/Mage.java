@@ -5,7 +5,7 @@ public class Mage extends Fighter {
 	public Mage(int id){
 		setName("Mage");
 		setPlayerId(id);
-		setAttackDamage(40);
+		setAttackDamage(20);
 		setHealth(80);
 		setHeal(10);
 		setBehaviour(new AIProfile(AIProfile.Strategy.AGGRESSIVE, AIProfile.Priority.STRONGEST));
@@ -63,6 +63,7 @@ public class Mage extends Fighter {
 			}
 		}
 		
+		behaviour.setStrategy(selectedStrategy);
 		return selectedStrategy;
 	}
 	
@@ -109,6 +110,37 @@ public class Mage extends Fighter {
 				behaviour.setMagic(magic);
 				magicWeakest();
 			}
+		} else if (behaviour.getPriority() == AIProfile.Priority.CLOSEST_WITH_EFFECT) {
+			if (behaviour.getStrategy() == AIProfile.Strategy.AGGRESSIVE) {
+				getClosestWithEffectAndAttack();
+			} else if (behaviour.getStrategy() == AIProfile.Strategy.PASSIVE) {
+				getClosestWithEffectAndMove();
+			} else if (behaviour.getStrategy() == AIProfile.Strategy.DEFENSIVE) {
+				getClosestWithEffectAndHeal();
+			} else if (behaviour.getStrategy() == AIProfile.Strategy.MAGIC) {
+				AIProfile.Magic magic = chooseMagic();
+				behaviour.setMagic(magic);
+				magicClosestWithEffect();
+			}
+		}
+	}
+	
+	private void magicClosestWithEffect() {
+		Tile closestFighter;
+		if (getPlayerId() == 1) {
+			closestFighter = Table.getClosestWithEffect(getX(), getY(), 2);
+		} else {
+			closestFighter = Table.getClosestWithEffect(getX(), getY(), 1);
+		}
+		if (closestFighter == null) {
+			System.out.println("No closest fighter with effect found, please choose again");
+			chooseStrategy();
+			choosePriority();
+			makeChoice();
+		} else if (closestFighter.getX() == getX() && closestFighter.getY() == getY()) {
+			System.out.println("No fighter found!");
+		} else {
+			behaviour.moveOrMagic(this, closestFighter);
 		}
 	}
 	

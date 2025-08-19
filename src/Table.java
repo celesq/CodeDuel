@@ -47,7 +47,7 @@ public class Table {
 		map[x][y] = new EmptyTile(x, y);
 	}
 	
-	public Tile getTileOnTable(int x, int y) {
+	public static Tile getTileOnTable(int x, int y) {
 		return map[x][y];
 	}
 	
@@ -139,16 +139,15 @@ public class Table {
 		return null;
 	}
 	
-	public static Tile BFS(Tile start, int desiredId, Tile[][] parents, boolean withEffect) {
+	public static Tile BFS(Tile start, int desiredId, Tile[][] parents, boolean withEffect, List<Tile> forbidden) {
 		PriorityQueue<Tile> queue = new PriorityQueue<>();
 		setDistances();
 		start.setDistance(0);
 		queue.add(start);
-		List<Tile> forbidden = new ArrayList<>();
 		
 		while (!queue.isEmpty()) {
 			Tile current = queue.poll();
-			if (current.getPlayerId() == desiredId) {
+			if (current.getPlayerId() == desiredId && !forbidden.contains(current)) {
 				if (!withEffect) {
 					return current;
 				} else {
@@ -194,7 +193,9 @@ public class Table {
 	
 	public static Tile getClosest(int x, int y, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		Tile closest = BFS(map[x][y], desiredId, parents, false);
+		List<Tile> forbidden = new ArrayList<>();
+		forbidden.add(Table.getTileOnTable(x, y));
+		Tile closest = BFS(map[x][y], desiredId, parents, false, forbidden);
 		if (closest != null) {
 			return closest;
 		} else {
@@ -243,7 +244,9 @@ public class Table {
 	}
 	public static void moveToClosest(Tile fighter, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		Tile closest = BFS(fighter, desiredId, parents, false);
+		List<Tile> forbidden = new ArrayList<>();
+		forbidden.add(fighter);
+		Tile closest = BFS(fighter, desiredId, parents, false, forbidden);
 		if (closest == null) {
 			System.out.println("No closest fighter found\n");
 		} else {
@@ -253,7 +256,8 @@ public class Table {
 	
 	public static boolean moveToClosestWithEffect(Tile fighter, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		Tile closest = BFS(fighter, desiredId, parents, true);
+		List<Tile> forbidden = new ArrayList<>();
+		Tile closest = BFS(fighter, desiredId, parents, true, forbidden);
 		if (closest == null) {
 			System.out.println("No closest fighter found\n");
 			return false;
@@ -265,7 +269,9 @@ public class Table {
 	
 	public static Tile getClosestWithEffect(int x, int y, int desiredId) {
 		Tile[][] parents = new Tile[ROWS][COLUMNS];
-		return BFS(map[x][y], desiredId, parents, true);
+		List<Tile> forbidden = new ArrayList<>();
+		forbidden.add(Table.getTileOnTable(x, y));
+		return BFS(map[x][y], desiredId, parents, true, forbidden);
 	}
 	
 	public static void moveTowards(Tile myFighter, int x, int y) {

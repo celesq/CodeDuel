@@ -12,14 +12,21 @@ public class Healer extends Fighter {
 	@Override
 	public void moveOrTakeAction(Tile fighter, boolean heal) {
 		int distance = Math.abs(getX() - fighter.getX()) + Math.abs(getY() - fighter.getY());
+		
 		if (distance <= 3) {
 			if (heal) {
+				System.out.println("Healer healing");
 				heal(fighter);
+				return;
 			}
-		} else if ((getX() == fighter.getX() && Math.abs(getY() - fighter.getY()) < 2)
+		}
+		
+		if ((getX() == fighter.getX() && Math.abs(getY() - fighter.getY()) < 2)
 				|| (getY() == fighter.getY() && Math.abs(getX() - fighter.getX()) < 2)) {
+			System.out.println("Healer attacking");
 			attack(fighter);
 		} else {
+			System.out.println("Moving towards fighter");
 			Table.moveTowards(this, fighter.getX(), fighter.getY());
 		}
 	}

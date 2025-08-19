@@ -33,4 +33,9 @@ public class GameObserver implements FighterObserver {
 			GameEngine.getInstance().endGame(1);
 		}
 	}
+	
+	@Override
+	public void fighterHealed(Fighter fighter, int oldHp, int newHp) {
+		System.out.println("Fighter" + fighter.getName() + " got healed! Old HP: " + oldHp + " ,new HP: " + newHp);
+	}
 }

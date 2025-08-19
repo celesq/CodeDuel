@@ -91,6 +91,7 @@ public abstract class Fighter extends Tile{
 			}
 		}
 		
+		behaviour.setStrategy(selectedStrategy);
 		return selectedStrategy;
 	}
 	
@@ -118,6 +119,7 @@ public abstract class Fighter extends Tile{
 			}
 		}
 		
+		behaviour.setPriority(selectedPriority);
 		return selectedPriority;
 	}
 	
@@ -181,7 +183,12 @@ public abstract class Fighter extends Tile{
 	}
 	
 	public void takeHeal(Tile fighter, int healingTaken) {
+		int oldHp = fighter.getHealth();
 		fighter.setHealth(fighter.getHealth() + healingTaken);
+		
+		for (FighterObserver observer : observers) {
+			observer.fighterHealed((Fighter) fighter, oldHp, fighter.getHealth());
+		}
 	}
 	
 	public void getClosestAndAttack() {
