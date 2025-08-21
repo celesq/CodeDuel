@@ -23,17 +23,20 @@ public class Mage extends Fighter {
 		System.out.println("Choose a magic to use:");
 		System.out.println("1. " + AIProfile.Magic.POISON);
 		System.out.println("2. " + AIProfile.Magic.CURSE);
+		System.out.println("3. " + AIProfile.Magic.SUPER_HEAL);
 		choice = scan.nextInt();
-		while (choice < 1 || choice > 2) {
-			System.out.println("Invalid choice, choose between 1 and 2");
+		while (choice < 1 || choice > 3) {
+			System.out.println("Invalid choice, choose between 1 and 3");
 			System.out.println("1. " + AIProfile.Magic.POISON);
 			System.out.println("2. " + AIProfile.Magic.CURSE);
+			System.out.println("3. " + AIProfile.Magic.SUPER_HEAL);
 			choice = scan.nextInt();
 		}
 		switch (choice) {
 			case 1 -> magic = AIProfile.Magic.POISON;
 			case 2 -> magic = AIProfile.Magic.CURSE;
-			default -> System.out.println("Invalid choice, choose between 1 and 2");
+			case 3 -> magic = AIProfile.Magic.SUPER_HEAL;
+			default -> System.out.println("Invalid choice, choose between 1 and 3");
 		}
 		
 		return magic;
@@ -127,7 +130,13 @@ public class Mage extends Fighter {
 	
 	private void magicClosestWithEffect() {
 		Tile closestFighter;
-		if (getPlayerId() == 1) {
+		if (behaviour.getMagic() == AIProfile.Magic.SUPER_HEAL) {
+			if (getPlayerId() == 1) {
+				closestFighter = Table.getClosestWithEffect(getX(), getY(), 1);
+			} else {
+				closestFighter = Table.getClosestWithEffect(getX(), getY(), 2);
+			}
+		} else if (getPlayerId() == 1) {
 			closestFighter = Table.getClosestWithEffect(getX(), getY(), 2);
 		} else {
 			closestFighter = Table.getClosestWithEffect(getX(), getY(), 1);
@@ -146,7 +155,13 @@ public class Mage extends Fighter {
 	
 	private void magicClosest() {
 		Tile closestFighter;
-		if (getPlayerId() == 1) {
+		if (behaviour.getMagic() == AIProfile.Magic.SUPER_HEAL) {
+			if (getPlayerId() == 1) {
+				closestFighter = Table.getWeakest(getX(), getY(), 1);
+			} else {
+				closestFighter = Table.getWeakest(getX(), getY(), 2);
+			}
+		} else if (getPlayerId() == 1) {
 			closestFighter = Table.getClosest(getX(), getY() , 2);
 		} else {
 			closestFighter = Table.getClosest(getX(), getY(), 1);
